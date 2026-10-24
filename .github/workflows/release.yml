@@ -23,6 +23,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify tagged commit is on master
+        shell: bash
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "::error::Release tags must point to a commit on master."
+            exit 1
+          fi
       - uses: dtolnay/rust-toolchain@stable
       - name: Build macOS app
         if: runner.os == 'macOS'
