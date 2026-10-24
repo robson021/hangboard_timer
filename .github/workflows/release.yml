@@ -9,8 +9,13 @@ permissions:
   contents: write
 
 jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
   build:
     name: Build (${{ matrix.os }})
+    needs: ci
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
