@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            artifact: hangboard_timer-macos.zip
+          - os: windows-latest
+            artifact: hangboard_timer-windows.zip
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build macOS app
+        if: runner.os == 'macOS'
+        run: |
+          ./build_macOS_app.sh
+          ditto -c -k --sequesterRsrc --keepParent target/hangboard_timer.app hangboard_timer-macos.zip
+      - name: Build Windows app
+        if: runner.os == 'Windows'
+        run: |
+          ./build_windows_app.ps1
+          Copy-Item target/hangboard_timer-windows.zip hangboard_timer-windows.zip
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true

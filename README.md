@@ -18,3 +18,8 @@ The original terminal-based workflow is also available:
 ```sh
 cargo run -- --cli
 ```
+
+## Releases
+
+Push a version tag (for example, `v0.1.0`) to build macOS and Windows
+distributions and publish them as assets on a GitHub release.
