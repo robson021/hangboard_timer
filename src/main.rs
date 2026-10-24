@@ -4,25 +4,9 @@ mod sound;
 mod workout_plan;
 
 use crate::workout_plan::WorkoutPlan;
-use std::thread;
-use std::time::Duration;
 
 fn print_separator() {
     println!("-------------------------------------")
-}
-
-fn sleep_seconds(seconds: u32) {
-    match seconds > 15 {
-        true => {
-            let interval = 10;
-            let seconds = seconds - interval;
-            thread::sleep(Duration::from_secs(seconds as u64));
-            audio_player::get_ready();
-            println!("Prepare. The next series starts in {interval}s");
-            thread::sleep(Duration::from_secs(interval as u64));
-        }
-        false => thread::sleep(Duration::from_secs(seconds as u64)),
-    };
 }
 
 fn main() -> eframe::Result {

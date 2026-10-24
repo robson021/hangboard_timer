@@ -1,6 +1,8 @@
-use crate::{audio_player, sleep_seconds};
+use crate::audio_player;
 use std::fmt::Display;
 use std::io::Write;
+use std::thread;
+use std::time::Duration;
 
 pub struct WorkoutPlan {
     pub hang_time: u32,
@@ -62,6 +64,19 @@ impl Display for WorkoutPlan {
                self.hang_time, self.rest_time, self.number_of_hang_repeats, self.rest_time_between_sets, self.number_of_sets,
         )
     }
+}
+
+fn sleep_seconds(seconds: u32) {
+    match seconds >= 20 {
+        true => {
+            let interval = 10;
+            thread::sleep(Duration::from_secs((seconds - interval) as u64));
+            audio_player::get_ready();
+            println!("Prepare. We start in {interval}s");
+            thread::sleep(Duration::from_secs(interval as u64));
+        }
+        false => thread::sleep(Duration::from_secs(seconds as u64)),
+    };
 }
 
 fn countdown_hang(time: u32, current_rep: u32, num_of_reps: u32) {
