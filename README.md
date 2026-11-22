@@ -1,6 +1,12 @@
 Sounds downloaded from
 https://mixkit.co/free-sound-effects/notification/
 
+## Screenshots
+
+| Workout menu | Hang timer |
+|:---:|:---:|
+| ![Workout menu](assets/screens/menu.png) | ![Hang timer](assets/screens/hang_time.png) |
+
 ## Usage
 
 Run the app to open the graphical hangboard timer:
