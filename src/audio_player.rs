@@ -1,14 +1,12 @@
 use crate::sound;
 use rodio::{Decoder, DeviceSinkBuilder, Player};
 use sound::AudioNotification;
-use std::fs;
 use std::io::Cursor;
 use std::sync::mpsc::{self, Sender};
-use std::sync::{Arc, OnceLock};
+use std::sync::OnceLock;
 use std::thread;
 
 static AUDIO_THREAD: OnceLock<Sender<AudioNotification>> = OnceLock::new();
-static AUDIO_FILES: [OnceLock<Result<Arc<[u8]>, String>>; 5] = [const { OnceLock::new() }; 5];
 
 pub fn bell() {
     play_sound(AudioNotification::Bell);
@@ -54,22 +52,7 @@ fn audio_sender() -> &'static Sender<AudioNotification> {
 }
 
 fn play_sound_on_audio_thread(sound: AudioNotification) -> Result<(), String> {
-    let file_path = sound.to_file_path();
-    let file_index = match sound {
-        AudioNotification::Bell => 0,
-        AudioNotification::Ding => 1,
-        AudioNotification::Finish => 2,
-        AudioNotification::RoundDone => 3,
-        AudioNotification::GetReady => 4,
-    };
-    let audio_data = AUDIO_FILES[file_index]
-        .get_or_init(|| {
-            fs::read(file_path)
-                .map(Arc::<[u8]>::from)
-                .map_err(|error| format!("Failed to open the file {file_path}: {error}"))
-        })
-        .clone()?;
-    let decoder = Decoder::try_from(Cursor::new(audio_data))
+    let decoder = Decoder::try_from(Cursor::new(sound.audio_data()))
         .map_err(|error| format!("Failed to decode the sound {sound:?}: {error:?}"))?;
     let mut stream = DeviceSinkBuilder::open_default_sink()
         .map_err(|error| format!("Failed to open audio output stream: {error:?}"))?;

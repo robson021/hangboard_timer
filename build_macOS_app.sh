@@ -17,9 +17,8 @@ fi
 cargo build --release
 
 rm -rf "$APP_DIR"
-mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
+mkdir -p "$APP_DIR/Contents/MacOS"
 cp "target/release/$APP_NAME" "$APP_DIR/Contents/MacOS/$APP_NAME-bin"
-cp -R assets "$APP_DIR/Contents/Resources/assets"
 
 cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -39,11 +38,9 @@ cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Sounds are loaded via the relative path "assets/sound/...", so run from Resources.
 cat > "$APP_DIR/Contents/MacOS/$APP_NAME" <<LAUNCHER
 #!/bin/bash
 DIR="\$(cd "\$(dirname "\$0")" && pwd)"
-cd "\$DIR/../Resources"
 exec "\$DIR/$APP_NAME-bin" "\$@"
 LAUNCHER
 chmod +x "$APP_DIR/Contents/MacOS/$APP_NAME"

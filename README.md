@@ -29,3 +29,5 @@ cargo run -- --cli
 
 Push a version tag (for example, `v0.1.0`) on a commit in `master` to build
 macOS and Windows distributions and publish them as assets on a GitHub release.
+The sound files are embedded in the executable, so the Windows ZIP contains
+only the `.exe` and does not need a separate `assets` folder.

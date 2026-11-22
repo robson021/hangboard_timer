@@ -13,8 +13,6 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if (Test-Path $OutDir) { Remove-Item -Recurse -Force $OutDir }
 New-Item -ItemType Directory -Path $OutDir | Out-Null
 Copy-Item "target\release\$AppName.exe" $OutDir
-# Sounds are loaded via the relative path "assets/sound/...", so keep assets next to the .exe.
-Copy-Item -Recurse "assets" "$OutDir\assets"
 
 $Zip = "$OutDir.zip"
 if (Test-Path $Zip) { Remove-Item -Force $Zip }
