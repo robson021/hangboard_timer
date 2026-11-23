@@ -64,13 +64,7 @@ struct HangboardApp {
 impl Default for HangboardApp {
     fn default() -> Self {
         Self {
-            plan: WorkoutPlan {
-                hang_time: 7,
-                rest_time: 3,
-                number_of_hang_repeats: 6,
-                rest_time_between_sets: 120,
-                number_of_sets: 3,
-            },
+            plan: PRESETS.into_iter().next().expect("at least one preset").1,
             phase: Phase::Idle,
             phase_ends_at: None,
             phase_duration: 0,
@@ -481,7 +475,7 @@ mod tests {
     #[test]
     fn defaults_and_presets_are_preserved_during_start_and_reset() {
         let mut app = HangboardApp::default();
-        assert_eq!(values(&app.plan), (7, 3, 6, 120, 3));
+        assert_eq!(values(&app.plan), values(&PRESETS[0].1));
 
         for ((_, preset), expected) in
             PRESETS
