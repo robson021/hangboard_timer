@@ -8,6 +8,38 @@ const MAX_SETS: u32 = 20;
 const ACCENT: egui::Color32 = egui::Color32::from_rgb(245, 142, 68);
 const BACKGROUND: egui::Color32 = egui::Color32::from_rgb(62, 59, 56);
 const MUTED_TEXT: egui::Color32 = egui::Color32::from_rgb(190, 173, 158);
+const PRESETS: [(&str, WorkoutPlan); 3] = [
+    (
+        "Abrahangs",
+        WorkoutPlan {
+            hang_time: 10,
+            rest_time: 50,
+            number_of_hang_repeats: 1,
+            rest_time_between_sets: 1,
+            number_of_sets: 1,
+        },
+    ),
+    (
+        "7/5",
+        WorkoutPlan {
+            hang_time: 7,
+            rest_time: 5,
+            number_of_hang_repeats: 6,
+            rest_time_between_sets: 180,
+            number_of_sets: 4,
+        },
+    ),
+    (
+        "10/7",
+        WorkoutPlan {
+            hang_time: 10,
+            rest_time: 7,
+            number_of_hang_repeats: 6,
+            rest_time_between_sets: 180,
+            number_of_sets: 4,
+        },
+    ),
+];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
@@ -20,12 +52,7 @@ enum Phase {
 }
 
 struct HangboardApp {
-    hang_time: u32,
-    rest_time: u32,
-    number_of_hang_repeats: u32,
-    rest_time_between_sets: u32,
-    number_of_sets: u32,
-    plan: Option<WorkoutPlan>,
+    plan: WorkoutPlan,
     phase: Phase,
     phase_ends_at: Option<Instant>,
     phase_duration: u32,
@@ -37,12 +64,13 @@ struct HangboardApp {
 impl Default for HangboardApp {
     fn default() -> Self {
         Self {
-            hang_time: 7,
-            rest_time: 3,
-            number_of_hang_repeats: 6,
-            rest_time_between_sets: 120,
-            number_of_sets: 3,
-            plan: None,
+            plan: WorkoutPlan {
+                hang_time: 7,
+                rest_time: 3,
+                number_of_hang_repeats: 6,
+                rest_time_between_sets: 120,
+                number_of_sets: 3,
+            },
             phase: Phase::Idle,
             phase_ends_at: None,
             phase_duration: 0,
@@ -59,21 +87,12 @@ impl HangboardApp {
     }
 
     fn start(&mut self) {
-        let plan = WorkoutPlan {
-            hang_time: self.hang_time,
-            rest_time: self.rest_time,
-            number_of_hang_repeats: self.number_of_hang_repeats,
-            rest_time_between_sets: self.rest_time_between_sets,
-            number_of_sets: self.number_of_sets,
-        };
         self.current_set = 1;
         self.current_rep = 1;
-        self.plan = Some(plan);
         self.set_phase(Phase::GetReady, 5, Instant::now());
     }
 
     fn reset(&mut self) {
-        self.plan = None;
         self.phase = Phase::Idle;
         self.phase_ends_at = None;
         self.phase_duration = 0;
@@ -90,7 +109,7 @@ impl HangboardApp {
     }
 
     fn start_hang(&mut self, starts_at: Instant) {
-        let hang_time = self.plan.as_ref().expect("workout plan is set").hang_time;
+        let hang_time = self.plan.hang_time;
         audio_player::ding();
         self.set_phase(Phase::Hang, hang_time, starts_at);
     }
@@ -121,7 +140,7 @@ impl HangboardApp {
         match self.phase {
             Phase::GetReady => self.start_hang(transition_at),
             Phase::Hang => {
-                let plan = self.plan.as_ref().expect("workout plan is set");
+                let plan = &self.plan;
                 if self.current_rep < plan.number_of_hang_repeats {
                     audio_player::bell();
                     self.set_phase(Phase::Rest, plan.rest_time, transition_at);
@@ -187,7 +206,7 @@ impl HangboardApp {
             .show(ui, |ui| {
                 ui.label("Hang");
                 ui.add(
-                    egui::DragValue::new(&mut self.hang_time)
+                    egui::DragValue::new(&mut self.plan.hang_time)
                         .range(1..=MAX_DURATION_SECONDS)
                         .suffix(" sec"),
                 );
@@ -195,7 +214,7 @@ impl HangboardApp {
 
                 ui.label("Rest");
                 ui.add(
-                    egui::DragValue::new(&mut self.rest_time)
+                    egui::DragValue::new(&mut self.plan.rest_time)
                         .range(1..=MAX_DURATION_SECONDS)
                         .suffix(" sec"),
                 );
@@ -203,30 +222,23 @@ impl HangboardApp {
 
                 ui.label("Hangs per set");
                 ui.add(
-                    egui::DragValue::new(&mut self.number_of_hang_repeats).range(1..=MAX_REPEATS),
+                    egui::DragValue::new(&mut self.plan.number_of_hang_repeats)
+                        .range(1..=MAX_REPEATS),
                 );
                 ui.end_row();
 
                 ui.label("Set rest");
                 ui.add(
-                    egui::DragValue::new(&mut self.rest_time_between_sets)
+                    egui::DragValue::new(&mut self.plan.rest_time_between_sets)
                         .range(1..=MAX_DURATION_SECONDS)
                         .suffix(" sec"),
                 );
                 ui.end_row();
 
                 ui.label("Number of sets");
-                ui.add(egui::DragValue::new(&mut self.number_of_sets).range(1..=MAX_SETS));
+                ui.add(egui::DragValue::new(&mut self.plan.number_of_sets).range(1..=MAX_SETS));
                 ui.end_row();
             });
-    }
-
-    fn apply_preset(&mut self, preset: WorkoutPlan) {
-        self.hang_time = preset.hang_time;
-        self.rest_time = preset.rest_time;
-        self.number_of_hang_repeats = preset.number_of_hang_repeats;
-        self.rest_time_between_sets = preset.rest_time_between_sets;
-        self.number_of_sets = preset.number_of_sets;
     }
 
     fn show_presets(&mut self, ui: &mut egui::Ui) {
@@ -239,43 +251,12 @@ impl HangboardApp {
         );
         ui.add_space(10.0);
         ui.horizontal(|ui| {
-            for (label, preset) in [
-                (
-                    "Abrahangs",
-                    WorkoutPlan {
-                        hang_time: 10,
-                        rest_time: 50,
-                        number_of_hang_repeats: 1,
-                        rest_time_between_sets: 1,
-                        number_of_sets: 1,
-                    },
-                ),
-                (
-                    "7/5",
-                    WorkoutPlan {
-                        hang_time: 7,
-                        rest_time: 5,
-                        number_of_hang_repeats: 6,
-                        rest_time_between_sets: 180,
-                        number_of_sets: 4,
-                    },
-                ),
-                (
-                    "10/7",
-                    WorkoutPlan {
-                        hang_time: 10,
-                        rest_time: 7,
-                        number_of_hang_repeats: 6,
-                        rest_time_between_sets: 180,
-                        number_of_sets: 4,
-                    },
-                ),
-            ] {
+            for (label, preset) in PRESETS {
                 if ui
                     .add_sized([82.0, 34.0], egui::Button::new(label))
                     .clicked()
                 {
-                    self.apply_preset(preset);
+                    self.plan = preset;
                 }
             }
         });
@@ -379,15 +360,9 @@ impl HangboardApp {
             egui::RichText::new(format!(
                 "SET {} OF {}   ·   HANG {} OF {}",
                 self.current_set,
-                self.plan
-                    .as_ref()
-                    .expect("workout plan is set")
-                    .number_of_sets,
+                self.plan.number_of_sets,
                 self.current_rep,
-                self.plan
-                    .as_ref()
-                    .expect("workout plan is set")
-                    .number_of_hang_repeats
+                self.plan.number_of_hang_repeats
             ))
             .size(11.0)
             .strong()
@@ -487,4 +462,39 @@ pub fn run() -> eframe::Result {
         options,
         Box::new(|_creation_context| Ok(Box::<HangboardApp>::default())),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{HangboardApp, WorkoutPlan, PRESETS};
+
+    fn values(plan: &WorkoutPlan) -> (u32, u32, u32, u32, u32) {
+        (
+            plan.hang_time,
+            plan.rest_time,
+            plan.number_of_hang_repeats,
+            plan.rest_time_between_sets,
+            plan.number_of_sets,
+        )
+    }
+
+    #[test]
+    fn defaults_and_presets_are_preserved_during_start_and_reset() {
+        let mut app = HangboardApp::default();
+        assert_eq!(values(&app.plan), (7, 3, 6, 120, 3));
+
+        for ((_, preset), expected) in
+            PRESETS
+                .into_iter()
+                .zip([(10, 50, 1, 1, 1), (7, 5, 6, 180, 4), (10, 7, 6, 180, 4)])
+        {
+            app.plan = preset;
+            app.start();
+            assert!(app.is_running());
+            assert_eq!(values(&app.plan), expected);
+            app.reset();
+            assert!(!app.is_running());
+            assert_eq!(values(&app.plan), expected);
+        }
+    }
 }
