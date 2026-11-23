@@ -220,6 +220,66 @@ impl HangboardApp {
                 ui.end_row();
             });
     }
+
+    fn apply_preset(&mut self, preset: WorkoutPlan) {
+        self.hang_time = preset.hang_time;
+        self.rest_time = preset.rest_time;
+        self.number_of_hang_repeats = preset.number_of_hang_repeats;
+        self.rest_time_between_sets = preset.rest_time_between_sets;
+        self.number_of_sets = preset.number_of_sets;
+    }
+
+    fn show_presets(&mut self, ui: &mut egui::Ui) {
+        ui.add_space(18.0);
+        ui.label(
+            egui::RichText::new("PRESETS")
+                .size(11.0)
+                .strong()
+                .color(MUTED_TEXT),
+        );
+        ui.add_space(10.0);
+        ui.horizontal(|ui| {
+            for (label, preset) in [
+                (
+                    "Abrahangs",
+                    WorkoutPlan {
+                        hang_time: 10,
+                        rest_time: 50,
+                        number_of_hang_repeats: 1,
+                        rest_time_between_sets: 1,
+                        number_of_sets: 1,
+                    },
+                ),
+                (
+                    "7/5",
+                    WorkoutPlan {
+                        hang_time: 7,
+                        rest_time: 5,
+                        number_of_hang_repeats: 6,
+                        rest_time_between_sets: 180,
+                        number_of_sets: 4,
+                    },
+                ),
+                (
+                    "10/7",
+                    WorkoutPlan {
+                        hang_time: 10,
+                        rest_time: 7,
+                        number_of_hang_repeats: 6,
+                        rest_time_between_sets: 180,
+                        number_of_sets: 4,
+                    },
+                ),
+            ] {
+                if ui
+                    .add_sized([82.0, 34.0], egui::Button::new(label))
+                    .clicked()
+                {
+                    self.apply_preset(preset);
+                }
+            }
+        });
+    }
 }
 
 impl eframe::App for HangboardApp {
@@ -260,6 +320,7 @@ impl eframe::App for HangboardApp {
                                         ui.add_space(18.0);
                                     }
                                     self.show_settings(ui);
+                                    self.show_presets(ui);
                                 }
 
                                 ui.add_space(20.0);
