@@ -14,7 +14,7 @@ const PRESETS: [(&str, WorkoutPlan); 3] = [
         WorkoutPlan {
             hang_time: 10,
             rest_time: 50,
-            number_of_hang_repeats: 1,
+            number_of_hang_repeats: 10,
             rest_time_between_sets: 1,
             number_of_sets: 1,
         },
@@ -480,7 +480,7 @@ mod tests {
         for ((_, preset), expected) in
             PRESETS
                 .into_iter()
-                .zip([(10, 50, 1, 1, 1), (7, 5, 6, 180, 4), (10, 7, 6, 180, 4)])
+                .zip([(10, 50, 10, 1, 1), (7, 5, 6, 180, 4), (10, 7, 6, 180, 4)])
         {
             app.plan = preset;
             app.start();
