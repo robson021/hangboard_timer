@@ -48,7 +48,6 @@ enum Phase {
     Hang,
     Rest,
     SetRest,
-    Complete,
 }
 
 struct HangboardApp {
@@ -77,7 +76,7 @@ impl Default for HangboardApp {
 
 impl HangboardApp {
     fn is_running(&self) -> bool {
-        !matches!(self.phase, Phase::Idle | Phase::Complete)
+        !matches!(self.phase, Phase::Idle)
     }
 
     fn start(&mut self) {
@@ -144,8 +143,7 @@ impl HangboardApp {
                         self.set_phase(Phase::SetRest, plan.rest_time_between_sets, transition_at);
                     } else {
                         audio_player::finish();
-                        self.phase = Phase::Complete;
-                        self.phase_ends_at = None;
+                        self.reset();
                     }
                 }
             }
@@ -158,7 +156,7 @@ impl HangboardApp {
                 self.current_rep = 1;
                 self.start_hang(transition_at);
             }
-            Phase::Idle | Phase::Complete => {
+            Phase::Idle => {
                 self.phase_ends_at = None;
             }
         }
@@ -171,7 +169,6 @@ impl HangboardApp {
             Phase::Hang => "Hang",
             Phase::Rest => "Rest",
             Phase::SetRest => "Rest between sets",
-            Phase::Complete => "Workout complete",
         }
     }
 
@@ -286,30 +283,17 @@ impl eframe::App for HangboardApp {
                                 if is_running {
                                     self.show_running_session(ui);
                                 } else {
-                                    if self.phase == Phase::Complete {
-                                        ui.label(
-                                            egui::RichText::new(self.phase_label())
-                                                .size(22.0)
-                                                .strong(),
-                                        );
-                                        ui.add_space(18.0);
-                                    }
                                     self.show_settings(ui);
                                     self.show_presets(ui);
                                 }
 
                                 ui.add_space(20.0);
                                 if !is_running {
-                                    let button_text = if self.phase == Phase::Complete {
-                                        "Start another workout"
-                                    } else {
-                                        "Start workout"
-                                    };
                                     start_requested = ui
                                         .add_sized(
                                             [240.0, 46.0],
                                             egui::Button::new(
-                                                egui::RichText::new(button_text)
+                                                egui::RichText::new("Start workout")
                                                     .strong()
                                                     .color(egui::Color32::from_rgb(38, 28, 22)),
                                             )
